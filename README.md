@@ -13,6 +13,10 @@ A web-based simulator for testing USSD applications and services. This tool allo
 - Simple and intuitive user interface
 - Detailed console logging for debugging
 
+## Important Note
+
+This simulator only works for cases where the telcos redirect the menu generation to an external service. It may not work with USSD services that use different implementation models.
+
 ## Installation
 
 ### Prerequisites

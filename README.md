@@ -1,4 +1,4 @@
-# XENO USSD Simulator
+# Web USSD Simulator
 
 A web-based simulator for testing USSD applications and services. This tool allows developers to interact with USSD services without needing a physical device or telecom connection.
 

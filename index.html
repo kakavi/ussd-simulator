@@ -73,6 +73,13 @@
             width: 90%;
             margin: 15px auto;
         }
+        .options-history {
+            color: black;
+            text-align: left;
+            margin: 10px auto;
+            max-width: 300px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +91,9 @@
     <input type="text" id="phoneNumber" placeholder="Phone Number (e.g. 25677...)" required />
     <input type="text" id="serviceCode" placeholder="Service Code (*384*XXXX#)" value="*165*5*7#" required />
     <button onclick="startSession()">Start USSD Session</button>
+</div>
+<div id="optionsHistory" class="options-history">
+    <strong>Options History:</strong>
 </div>
 
 <div class="phone-frame" id="phone" style="display:none;">
@@ -100,6 +110,7 @@
     let phoneNumber = '';
     let serviceCode = '';
     let text = ''; // Current input text
+    let optionsHistory = []; // Array to store entered options
 
     // Function to generate a random session ID
     function generateSessionId() {
@@ -116,11 +127,26 @@
         document.getElementById('serviceCode').value = '*165*5*7#';
     };
 
+    // Function to update the options history display
+    function updateOptionsHistory() {
+        const historyElement = document.getElementById('optionsHistory');
+        let historyHTML = '<strong>Options History:</strong>';
+
+        if (optionsHistory.length > 0) {
+            historyHTML += ' ';
+            historyHTML += optionsHistory.join('*');
+        }
+
+        historyElement.innerHTML = historyHTML;
+    }
+
     function startSession() {
         sessionId = document.getElementById('sessionId').value;
         phoneNumber = document.getElementById('phoneNumber').value;
         serviceCode = document.getElementById('serviceCode').value;
         text = ''; // Reset for new session
+        optionsHistory = []; // Clear options history
+        updateOptionsHistory(); // Update the display
 
         document.getElementById('phone').style.display = 'block';
 
@@ -133,6 +159,11 @@
 
         // Set current input
         text = input;
+
+        // Add to options history
+        optionsHistory.push(input);
+        updateOptionsHistory();
+
         document.getElementById('userInput').value = '';
         sendRequest();
     }

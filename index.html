@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XENO USSD Simulator</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f8f8f8; padding: 40px; }
+        input, button { font-size: 16px; padding: 10px; margin: 10px auto; width: 250px; display: block; }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .ussd-box {
+            background: #fff;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            width: 90%;
+            margin: 10px auto 20px;
+            text-align: left;
+            white-space: pre-wrap;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            font-size: 14px;
+            color: #000;
+            min-height: 250px;
+            overflow-y: auto;
+        }
+        .phone-frame {
+            border: 4px solid #444;
+            border-radius: 40px;
+            padding: 40px 20px;
+            background: #000;
+            color: #fff;
+            width: 320px;
+            margin: 20px auto;
+            height: auto;
+            min-height: 500px;
+            position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        /* Phone notch */
+        .phone-frame::before {
+            content: "";
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background: #444;
+            border-radius: 0 0 10px 10px;
+        }
+        /* Home indicator */
+        .phone-frame::after {
+            content: "";
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+        }
+
+        /* Phone inputs container */
+        .phone-inputs {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            margin: 15px auto;
+        }
+    </style>
+</head>
+<body>
+
+<h2>XENO USSD Simulator</h2>
+
+<div class="form-container">
+    <input type="text" id="sessionId" placeholder="Session ID (e.g. abc123)" readonly />
+    <input type="text" id="phoneNumber" placeholder="Phone Number (e.g. 25677...)" required />
+    <input type="text" id="serviceCode" placeholder="Service Code (*384*XXXX#)" value="*165*5*7#" required />
+    <button onclick="startSession()">Start USSD Session</button>
+</div>
+
+<div class="phone-frame" id="phone" style="display:none;">
+    <div class="ussd-box" id="menuBox">Dialing...</div>
+    <div class="phone-inputs">
+        <input type="text" id="userInput" placeholder="Enter response..." style="width: 70%; margin-right: 5px;" />
+        <button onclick="sendInput()" style="width: 25%;">Send</button>
+    </div>
+</div>
+
+<script>
+    let baseUrl = 'http://localhost:8990';
+    let sessionId = '';
+    let phoneNumber = '';
+    let serviceCode = '';
+    let text = ''; // Current input text
+
+    // Function to generate a random session ID
+    function generateSessionId() {
+        const timestamp = new Date().getTime();
+        const random = Math.floor(Math.random() * 10000);
+        const newSessionId = `session_${timestamp}_${random}`;
+        document.getElementById('sessionId').value = newSessionId;
+        return newSessionId;
+    }
+
+    // Generate session ID and set default service code on page load
+    window.onload = function() {
+        generateSessionId();
+        document.getElementById('serviceCode').value = '*165*5*7#';
+    };
+
+    function startSession() {
+        sessionId = document.getElementById('sessionId').value;
+        phoneNumber = document.getElementById('phoneNumber').value;
+        serviceCode = document.getElementById('serviceCode').value;
+        text = ''; // Reset for new session
+
+        document.getElementById('phone').style.display = 'block';
+
+        sendRequest(); // Initial request with no input
+    }
+
+    function sendInput() {
+        const input = document.getElementById('userInput').value.trim();
+        if (input === '') return;
+
+        // Set current input
+        text = input;
+        document.getElementById('userInput').value = '';
+        sendRequest();
+    }
+
+    function sendRequest() {
+        const queryParams = new URLSearchParams({
+            sessionId: sessionId,
+            phoneNumber: phoneNumber,
+            serviceCode: serviceCode,
+            text: text || 'null'
+        });
+
+        const requestUrl = `${baseUrl}/api/v1/ussd/menu?${queryParams.toString()}`;
+
+        // Log the request with detailed information
+        console.log('Sending request:', requestUrl);
+        console.log('Request parameters:', {
+            sessionId,
+            phoneNumber,
+            serviceCode,
+            text: text || 'null'
+        });
+
+        fetch(requestUrl, {
+            method: 'POST'
+        })
+            .then(res => res.text())
+            .then(data => {
+                // Log the response before displaying it
+                console.log('Response received:', data);
+                console.log('Response details:', {
+                    timestamp: new Date().toISOString(),
+                    length: data.length,
+                    data
+                });
+
+                // Display in the menu box
+                document.getElementById('menuBox').innerText = data;
+            })
+            .catch(err => {
+                const errorMsg = 'Error: ' + err;
+                console.error('Request failed:', errorMsg);
+                console.error('Request details:', {
+                    url: requestUrl,
+                    method: 'POST',
+                    error: err
+                });
+                document.getElementById('menuBox').innerText = errorMsg;
+            });
+    }
+</script>
+</body>
+</html>
